@@ -1,0 +1,27 @@
+$mongoExport = "C:\Program Files\MongoDB\Tools\100\bin\mongoexport.exe"
+$mongoShell  = "C:\Program Files\MongoDB\mongosh\current\bin\mongosh.exe"
+
+$db = "YOUR_DATABASE"
+$outDir = "C:\mongodb-backups\$db-json"
+
+New-Item -ItemType Directory -Force $outDir | Out-Null
+
+$collections = & $mongoShell `
+  "mongodb://localhost:27017/$db" `
+  --quiet `
+  --eval "db.getCollectionNames().join('\n')"
+
+foreach ($collection in $collections) {
+    if ([string]::IsNullOrWhiteSpace($collection)) {
+        continue
+    }
+
+    Write-Host "Exporting $collection..."
+
+    & $mongoExport `
+      --uri="mongodb://localhost:27017" `
+      --db="$db" `
+      --collection="$collection" `
+      --out="$outDir\$collection.json" `
+      --jsonArray
+}
